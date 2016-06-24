@@ -1,0 +1,163 @@
+---
+title: "NEON-capstone"
+author: "Amy Hudson"
+date: "June 23, 2016"
+output: html_document
+--- 
+
+#NEON capstone 
+
+just that plot or all of those bands
+NDVI
+
+NEON Phenology Observations are available for HARV, 2013 and 2014
+LTER Pheno Data?
+Pheno Cameras: harvardhemlock2 (Phenocam network) (write empty code to incorporate- they don't have photos for period of overlap)
+NDVI? (2014)
+LandSat? (2013 and 2014?)
+MODIS?
+
+https://public.etherpad-mozilla.org/p/HARV_phenology
+
+Correlate each phenophase with NDVI 
+Or create a vector
+
+HARV: Prospect Hill Tract
+42.541779  -72.173509
+42.543716 -72.170825
+
+Pheno observation vs phenocam
+Pheno vs Elevation
+Compare NEON Phenology with Harvard efforts... USNPN? 
+
+Compare Observation data 
+
+#Load Libraries
+```{r load-libraries}
+library(raster)
+library(rhdf5)
+library(rgdal)
+library(neonAOP)
+library(rgeos)
+
+```
+
+#Read in NEON Phenology Observations 
+```{r input-pheno-obs}
+pheno.spatial <- read.csv("../NEONdata/HARV Phenology/NEON.D01.HARV.DP1.10055.001.phe_perindividual.csv") #upload individualID, decimalLatitude, decimalLongitude, elevation
+
+pheno.phase <- read.csv("../NEONdata/HARV Phenology/NEON.D01.HARV.DP1.10055.001.phe_statusintensity.csv") #upload individualID, dayOfYear, phenophaseName, phenophaseStatus 
+
+myvars <- c("individualID","dayOfYear","phenophaseName","phenophaseStatus")
+pheno.phase.sub <- pheno.phase[myvars]
+names(pheno.phase.sub) <- c("individualID","dayOfYear","phenophaseName","phenophaseStatus")
+
+myvars <- c("individualID", "decimalLatitude", "decimalLongitude", "elevation")
+pheno.spatial.sub <- pheno.spatial[myvars]
+names(pheno.spatial.sub) <- c("individualID", "decimalLatitude", "decimalLongitude", "elevation")
+
+#Clean up phenophases to only those recorded as yes's
+pheno.phase.sub$phenophaseStatus[pheno.phase.sub$phenophaseStatus == 'no'] <- NA
+pheno.phase.sub$phenophaseStatus[pheno.phase.sub$phenophaseStatus == 'uncertain'] <- NA
+pheno.phase.sub$phenophaseStatus[pheno.phase.sub$phenophaseStatus == 'missed'] <- NA
+
+names(pheno.phase.sub) <- c("individualID","dayOfYear","phenophaseName", "phenophaseStatus")
+#complete phenophase observations
+pheno.phase.comp <- pheno.phase.sub[complete.cases(pheno.phase.sub),]
+pheno.phase.comp$phenophaseStatus <-  NULL
+  
+pheno <- merge(pheno.phase.comp, pheno.spatial.sub, by = "individualID")
+View(pheno)
+
+
+```
+
+
+```{r hist}
+
+
+
+```
+
+
+```{r scrap}
+
+pheno.phase.length <- 6154 #length(pheno.phase.comp) 
+pheno.spatial.length <- 204 #length(pheno.spatial.sub)
+lat<- rep(NA,pheno.phase.length)
+lon <- rep(NA,pheno.phase.length)
+ele <- rep(NA,pheno.phase.length)
+              
+
+for(i in 1:pheno.phase.length){
+  for(j in 1:pheno.spatial.length){
+    if(pheno.phase.sub$individualID[i] == pheno.spatial.sub$individualID[j]){
+    lat[i] <- pheno.spatial.sub$decimalLatitude[j] 
+    lon[i] <- pheno.spatial.sub$decimalLongitude[j]
+    ele[i] <- pheno.spatial.sub$elevation[j]
+    } else{
+    }
+  }
+}
+pheno <- cbind(lat,lon,ele)
+
+
+#summary graphs
+#identifying phenophases
+summary(pheno.phase$phenophaseName)
+
+
+######
+#Attach Lat Lon with phenophase data
+
+by phenophaseName mean dayOfYear for uid 
+(attach lat lon to pheno.phase.sub uid)
+
+falling_leaves <- pheno.phase.comp %>%
+group_by(phenophaseName) %>%
+  summarise(mean(dayOfYear))
+
+
+insitu_meanE_meanN_maxStemHeight <- veg1 %>%
+  group_by(plotid) %>%
+  summarise(mean(easting),mean(northing),max(stemheight))
+
+names(insitu_meanE_meanN_maxStemHeight) <- c("plotid","easting","northing","insitu_maxHt")
+
+```
+
+
+
+
+
+#subset for elevation data (raster)
+
+#insert and save as a raster
+each phenophase can be a raster 
+
+
+##NDVI for SJER but code for when available at harvard
+```{r NDVI}
+
+#read in NDVI raster
+ndvi <- raster("../NEONdata/D17-California/SJER/2013/spectrometer/veg_index/SJER_NDVI.tif")
+
+#imagine multiple NDVI files
+
+
+#cut off ndvi at different growing thresholds
+
+```
+
+##Modify Holly's Landsat Thermal and CHM for HARV pheno spatial scale
+```{r landsat-plus-chm-mod-spatial}
+
+thermal <- raster("../NEONdata/HARV_thermal.TIF")
+raster("")
+
+```
+
+#Phenopix package
+
+
+
